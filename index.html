@@ -41,8 +41,10 @@
   .field input { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:13px 16px; color:var(--text); font-size:14px; font-family:'Inter',sans-serif; outline:none; transition:border-color 0.15s; }
   .field input:focus { border-color:var(--gold); }
   .field input::placeholder { color:var(--muted); }
+  .field .hint { font-size:11px; color:var(--muted); margin-top:6px; }
   .btn-form { width:100%; background:var(--gold-dim); color:#1a0f00; border:none; border-radius:var(--radius); padding:15px; font-size:14px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; transition:background 0.15s; margin-top:4px; }
   .btn-form:hover { background:var(--gold); }
+  .btn-form:disabled { opacity:0.5; cursor:not-allowed; }
   #mis-grupos { padding:0; }
   .page-header { padding:24px 28px 20px; display:flex; align-items:flex-start; justify-content:space-between; }
   .page-header h2 { font-family:'Playfair Display',serif; font-size:2rem; margin-bottom:4px; }
@@ -68,7 +70,7 @@
   .ver-bebidas { color:var(--gold); font-size:13px; font-weight:500; cursor:pointer; background:none; border:none; font-family:'Inter',sans-serif; display:flex; align-items:center; gap:4px; margin-top:14px; }
   .ver-bebidas:hover { text-decoration:underline; }
   .share-hint { text-align:center; color:var(--muted); font-size:13px; margin-top:12px; }
-  .share-hint strong { color:var(--text); }
+  .share-hint strong { color:var(--gold); }
   #bebidas-screen { padding:0; }
   .bebidas-header { padding:20px 28px 16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
   .bebidas-header-left h2 { font-family:'Playfair Display',serif; font-size:1.8rem; }
@@ -86,7 +88,7 @@
   .cat-row::-webkit-scrollbar { display:none; }
   .empty-state { display:flex; flex-direction:column; align-items:center; padding:80px 20px; color:var(--muted); gap:12px; }
   .bebidas-grid { padding:0 28px 28px; display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:14px; }
-  .bebida-card { background:var(--surface); border-radius:var(--radius); overflow:hidden; cursor:pointer; transition:transform 0.15s; }
+  .bebida-card { background:var(--surface); border-radius:var(--radius); overflow:hidden; transition:transform 0.15s; }
   .bebida-card:hover { transform:translateY(-2px); }
   .bebida-img { height:160px; background:var(--surface2); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
   .bebida-img .type-badge { position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.6); border-radius:6px; padding:3px 8px; font-size:11px; color:var(--muted); }
@@ -113,8 +115,11 @@
   .star-rating { display:flex; gap:6px; margin-top:4px; }
   .star-btn { background:none; border:none; font-size:22px; cursor:pointer; color:var(--border); transition:color 0.1s; }
   .star-btn.active { color:var(--gold); }
-  .fixed-code-badge { background:#2a1f0a; border:1px solid var(--gold-dim); border-radius:8px; padding:10px 16px; margin-bottom:20px; font-size:13px; color:var(--muted); display:flex; align-items:center; gap:8px; }
-  .fixed-code-badge strong { color:var(--gold); font-size:16px; letter-spacing:2px; }
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 20px; font-size:13px; color:var(--text); z-index:999; opacity:0; transition:opacity 0.3s; pointer-events:none; }
+  .toast.show { opacity:1; }
+  .loading { display:flex; align-items:center; justify-content:center; gap:10px; padding:40px; color:var(--muted); font-size:14px; }
+  .spinner { width:20px; height:20px; border:2px solid var(--border); border-top-color:var(--gold); border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
   @media (max-width:600px) {
     nav, .page-header, .grupos-list, .bebidas-header, .grupo-detalle-body, .bebidas-grid { padding-left:16px; padding-right:16px; }
     .search-bar { margin-left:16px; margin-right:16px; }
@@ -125,6 +130,10 @@
 </head>
 <body>
 
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- WELCOME -->
 <div id="welcome" class="screen active">
   <div class="app-icon"><svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M8 22h8M12 17v5M5 2h14l-2 9a5 5 0 01-10 0L5 2z"/></svg></div>
   <h1>Bebedores<br>Compulsivos</h1>
@@ -133,6 +142,7 @@
   <button class="btn-secondary" onclick="showScreen('join-form')"><span>→</span> Unirme a un grupo</button>
 </div>
 
+<!-- CREAR GRUPO -->
 <div id="create-form" class="screen">
   <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:40px 20px;">
     <div class="form-box">
@@ -141,13 +151,25 @@
         <div class="app-icon" style="margin:0 auto 16px;"><svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M8 22h8M12 17v5M5 2h14l-2 9a5 5 0 01-10 0L5 2z"/></svg></div>
         <h1>Bebedores Compulsivos</h1><p>El diario de bebidas de tu grupo</p>
       </div>
-      <div class="field"><label>Tu nombre</label><input id="create-name" type="text" placeholder="Ej: Carlos"></div>
-      <div class="field"><label>Nombre del grupo</label><input id="create-grupo" type="text" placeholder="Ej: Los catadores"></div>
-      <button class="btn-form" onclick="crearGrupo()">Crear grupo y entrar</button>
+      <div class="field">
+        <label>Tu nombre</label>
+        <input id="create-name" type="text" placeholder="Ej: Carlos">
+      </div>
+      <div class="field">
+        <label>Nombre del grupo</label>
+        <input id="create-grupo" type="text" placeholder="Ej: Los catadores">
+      </div>
+      <div class="field">
+        <label>Código del grupo</label>
+        <input id="create-code" type="text" placeholder="Ej: AMIGOS24" style="text-transform:uppercase">
+        <div class="hint">Este código lo compartirás con tus amigos para que se unan</div>
+      </div>
+      <button class="btn-form" id="btn-crear" onclick="crearGrupo()">Crear grupo y entrar</button>
     </div>
   </div>
 </div>
 
+<!-- UNIRSE -->
 <div id="join-form" class="screen">
   <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:40px 20px;">
     <div class="form-box">
@@ -156,17 +178,25 @@
         <div class="app-icon" style="margin:0 auto 16px;"><svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M8 22h8M12 17v5M5 2h14l-2 9a5 5 0 01-10 0L5 2z"/></svg></div>
         <h1>Bebedores Compulsivos</h1><p>El diario de bebidas de tu grupo</p>
       </div>
-      <div class="fixed-code-badge">🔑 Código del grupo: <strong>BC2026</strong></div>
-      <div class="field"><label>Tu nombre</label><input id="join-name" type="text" placeholder="Ej: Carlos"></div>
-      <button class="btn-form" onclick="unirseGrupo()">Unirse al grupo</button>
+      <div class="field">
+        <label>Tu nombre</label>
+        <input id="join-name" type="text" placeholder="Ej: Carlos">
+      </div>
+      <div class="field">
+        <label>Código del grupo</label>
+        <input id="join-code" type="text" placeholder="Ej: AMIGOS24" style="text-transform:uppercase">
+        <div class="hint">Pídele el código al creador del grupo</div>
+      </div>
+      <button class="btn-form" id="btn-unirse" onclick="unirseGrupo()">Unirse al grupo</button>
     </div>
   </div>
 </div>
 
+<!-- MIS GRUPOS -->
 <div id="mis-grupos" class="screen">
   <nav>
     <div class="nav-logo" onclick="showScreen('mis-grupos')"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M8 22h8M12 17v5M5 2h14l-2 9a5 5 0 01-10 0L5 2z"/></svg> Bebedores Compulsivos</div>
-    <button class="nav-btn" onclick="showScreen('mis-grupos')"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M17 20h5v-2a4 4 0 00-5.5-3.7M9 20H4v-2a4 4 0 015.5-3.7M12 12a4 4 0 100-8 4 4 0 000 8z"/></svg> Mis grupos</button>
+    <button class="nav-btn" onclick="logout()">Cerrar sesión</button>
   </nav>
   <div class="page-header">
     <div><h2>Mis grupos</h2><div class="subtitle" id="mg-subtitle">Bienvenido</div></div>
@@ -178,6 +208,7 @@
   <div class="grupos-list" id="grupos-list"></div>
 </div>
 
+<!-- GRUPO DETALLE -->
 <div id="grupo-detalle" class="screen">
   <nav>
     <div class="nav-logo" onclick="showScreen('mis-grupos')"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M8 22h8M12 17v5M5 2h14l-2 9a5 5 0 01-10 0L5 2z"/></svg> Bebedores Compulsivos</div>
@@ -186,6 +217,7 @@
   <div class="grupo-detalle-body" id="grupo-detalle-body"></div>
 </div>
 
+<!-- BEBIDAS -->
 <div id="bebidas-screen" class="screen">
   <nav>
     <div class="nav-logo" onclick="showScreen('mis-grupos')"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M8 22h8M12 17v5M5 2h14l-2 9a5 5 0 01-10 0L5 2z"/></svg> Bebedores Compulsivos</div>
@@ -226,6 +258,7 @@
   <div id="bebidas-container"></div>
 </div>
 
+<!-- MODAL AÑADIR BEBIDA -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <div class="modal-header"><h3>Añadir bebida</h3><button class="modal-close" onclick="closeModal()">×</button></div>
@@ -255,34 +288,52 @@
       </div>
       <div class="notes-field field"><label>Notas</label><textarea id="m-notas" placeholder="Aroma, sabor, sensaciones..."></textarea></div>
       <div class="field"><label>Fecha</label><input id="m-fecha" type="date"></div>
-      <button class="btn-form" onclick="addBebida()">Añadir bebida</button>
+      <button class="btn-form" id="btn-add-bebida" onclick="addBebida()">Añadir bebida</button>
     </div>
   </div>
 </div>
 
 <script>
-const FIXED_CODE = 'BC2026';
-const state = { user:'', grupos:[], currentGrupoId:null, filterTipo:'todas', filterCat:'todas', rating:0, photoData:null };
+// ── Configuración JSONBin ──
+const BIN_ID = '69b71920aa77b81da9e94c37';
+const API_KEY = '$2a$10$9cO4uPteBKsiYJs7oKLdO.KzPEJgmhNP4EUxvsdBolNV2lRwSgtha';
+const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
-function save() {
-  try {
-    localStorage.setItem('bc_grupos', JSON.stringify(state.grupos));
-    localStorage.setItem('bc_user', state.user);
-    localStorage.setItem('bc_currentId', state.currentGrupoId || '');
-  } catch(e) { console.log('localStorage no disponible'); }
+const state = {
+  user: '', currentGrupoCode: null,
+  filterTipo: 'todas', filterCat: 'todas',
+  rating: 0, photoData: null,
+  db: { grupos: [] }
+};
+
+// ── JSONBin: leer y escribir ──
+async function dbRead() {
+  const res = await fetch(API_URL + '/latest', {
+    headers: { 'X-Master-Key': API_KEY }
+  });
+  const data = await res.json();
+  state.db = data.record;
 }
 
-function load() {
-  try {
-    const g = localStorage.getItem('bc_grupos');
-    const u = localStorage.getItem('bc_user');
-    const id = localStorage.getItem('bc_currentId');
-    if (g) state.grupos = JSON.parse(g);
-    if (u) state.user = u;
-    if (id && id !== '') state.currentGrupoId = parseInt(id);
-  } catch(e) {}
+async function dbWrite() {
+  await fetch(API_URL, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+    body: JSON.stringify(state.db)
+  });
 }
 
+// ── Sesión local ──
+function saveSession() {
+  localStorage.setItem('bc_user', state.user);
+  localStorage.setItem('bc_grupo', state.currentGrupoCode || '');
+}
+function loadSession() {
+  state.user = localStorage.getItem('bc_user') || '';
+  state.currentGrupoCode = localStorage.getItem('bc_grupo') || null;
+}
+
+// ── UI helpers ──
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -290,53 +341,96 @@ function showScreen(id) {
   if (id === 'bebidas-screen') renderBebidas();
 }
 
-function crearGrupo() {
+function showToast(msg, ms = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), ms);
+}
+
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.disabled = loading;
+  if (loading) btn.dataset.orig = btn.textContent;
+  btn.textContent = loading ? 'Cargando...' : btn.dataset.orig;
+}
+
+function logout() {
+  state.user = '';
+  state.currentGrupoCode = null;
+  saveSession();
+  showScreen('welcome');
+}
+
+// ── Crear grupo ──
+async function crearGrupo() {
   const name = document.getElementById('create-name').value.trim();
   const gname = document.getElementById('create-grupo').value.trim();
-  if (!name || !gname) { alert('Rellena todos los campos'); return; }
-  state.user = name;
-  const existing = state.grupos.find(g => g.code === FIXED_CODE);
-  if (existing) {
-    if (!existing.members.includes(name)) existing.members.push(name);
-    state.currentGrupoId = existing.id;
-  } else {
-    const g = { id: Date.now(), name: gname, code: FIXED_CODE, members: [name], bebidas: [] };
-    state.grupos.push(g);
-    state.currentGrupoId = g.id;
+  const code = document.getElementById('create-code').value.trim().toUpperCase();
+  if (!name || !gname || !code) { showToast('Rellena todos los campos'); return; }
+  if (code.length < 3) { showToast('El código debe tener al menos 3 caracteres'); return; }
+
+  setLoading('btn-crear', true);
+  try {
+    await dbRead();
+    const exists = state.db.grupos.find(g => g.code === code);
+    if (exists) { showToast('Ese código ya existe, elige otro'); setLoading('btn-crear', false); return; }
+    state.db.grupos.push({ name: gname, code, members: [name], bebidas: [] });
+    await dbWrite();
+    state.user = name;
+    state.currentGrupoCode = code;
+    saveSession();
+    document.getElementById('create-name').value = '';
+    document.getElementById('create-grupo').value = '';
+    document.getElementById('create-code').value = '';
+    showToast('Grupo creado correctamente');
+    showScreen('grupo-detalle');
+    renderDetalle();
+  } catch(e) {
+    showToast('Error de conexión, inténtalo de nuevo');
   }
-  document.getElementById('create-name').value = '';
-  document.getElementById('create-grupo').value = '';
-  save();
-  showScreen('grupo-detalle');
-  renderDetalle();
+  setLoading('btn-crear', false);
 }
 
-function unirseGrupo() {
+// ── Unirse a grupo ──
+async function unirseGrupo() {
   const name = document.getElementById('join-name').value.trim();
-  if (!name) { alert('Introduce tu nombre'); return; }
-  state.user = name;
-  const g = state.grupos.find(g => g.code === FIXED_CODE);
-  if (!g) {
-    alert('Aun no existe ningún grupo con el código BC2026.\nPide a tu amigo que cree el grupo primero desde su dispositivo.');
-    return;
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
+  if (!name || !code) { showToast('Rellena todos los campos'); return; }
+
+  setLoading('btn-unirse', true);
+  try {
+    await dbRead();
+    const g = state.db.grupos.find(g => g.code === code);
+    if (!g) { showToast('Código no encontrado'); setLoading('btn-unirse', false); return; }
+    if (!g.members.includes(name)) g.members.push(name);
+    await dbWrite();
+    state.user = name;
+    state.currentGrupoCode = code;
+    saveSession();
+    document.getElementById('join-name').value = '';
+    document.getElementById('join-code').value = '';
+    showToast('Te has unido a ' + g.name);
+    showScreen('grupo-detalle');
+    renderDetalle();
+  } catch(e) {
+    showToast('Error de conexión, inténtalo de nuevo');
   }
-  if (!g.members.includes(name)) g.members.push(name);
-  state.currentGrupoId = g.id;
-  document.getElementById('join-name').value = '';
-  save();
-  showScreen('grupo-detalle');
-  renderDetalle();
+  setLoading('btn-unirse', false);
 }
 
+// ── Render mis grupos ──
 function renderGrupos() {
   document.getElementById('mg-subtitle').textContent = state.user ? 'Hola, ' + state.user : 'Bienvenido';
+  const myGroups = state.db.grupos.filter(g => g.members.includes(state.user));
   const list = document.getElementById('grupos-list');
-  if (!state.grupos.length) {
-    list.innerHTML = '<p style="color:var(--muted);font-size:14px;padding:20px 0;">Aun no tienes grupos. Crea uno o únete con el código <strong style="color:var(--gold)">' + FIXED_CODE + '</strong>.</p>';
+  if (!myGroups.length) {
+    list.innerHTML = '<p style="color:var(--muted);font-size:14px;padding:20px 0;">Aún no tienes grupos. Crea uno o únete con un código.</p>';
     return;
   }
-  list.innerHTML = state.grupos.map(g => `
-    <div class="grupo-card" onclick="openGrupo(${g.id})">
+  list.innerHTML = myGroups.map(g => `
+    <div class="grupo-card" onclick="openGrupo('${g.code}')">
       <div class="grupo-card-top">
         <span class="grupo-name">${g.name}</span>
         <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2" style="color:var(--gold)"><path d="M8 22h8M12 17v5M5 2h14l-2 9a5 5 0 01-10 0L5 2z"/></svg>
@@ -348,14 +442,15 @@ function renderGrupos() {
     </div>`).join('');
 }
 
-function openGrupo(id) {
-  state.currentGrupoId = id;
+function openGrupo(code) {
+  state.currentGrupoCode = code;
+  saveSession();
   showScreen('grupo-detalle');
   renderDetalle();
 }
 
 function renderDetalle() {
-  const g = state.grupos.find(g => g.id === state.currentGrupoId);
+  const g = state.db.grupos.find(g => g.code === state.currentGrupoCode);
   if (!g) return;
   document.getElementById('grupo-detalle-body').innerHTML = `
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;">
@@ -368,15 +463,17 @@ function renderDetalle() {
     <div class="grupo-info-card">
       <h3>${g.name} <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2" style="color:var(--muted)"><path d="M8 22h8M12 17v5M5 2h14l-2 9a5 5 0 01-10 0L5 2z"/></svg></h3>
       <div class="grupo-info-row">👥 ${g.members.length} miembro${g.members.length!==1?'s':''}: ${g.members.join(', ')}</div>
-      <div class="grupo-info-row">📋 ${g.code}</div>
+      <div class="grupo-info-row">📋 Código: <strong style="color:var(--gold)">${g.code}</strong></div>
+      <div class="grupo-info-row">🍺 ${g.bebidas.length} bebida${g.bebidas.length!==1?'s':''} registrada${g.bebidas.length!==1?'s':''}</div>
       <button class="ver-bebidas" onclick="showScreen('bebidas-screen');renderBebidas()">Ver bebidas →</button>
     </div>
     <p class="share-hint">Comparte el código <strong>${g.code}</strong> con tus amigos para que se unan</p>`;
   document.getElementById('bebidas-title').textContent = g.name;
   document.getElementById('bebidas-member-chip').innerHTML = `👤 ${state.user}`;
-  document.getElementById('bebidas-code-chip').innerHTML = `📋 Código: <strong>${g.code}</strong>`;
+  document.getElementById('bebidas-code-chip').innerHTML = `📋 <strong>${g.code}</strong>`;
 }
 
+// ── Filtros bebidas ──
 function setTipo(el) {
   document.querySelectorAll('.filter-row .chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active'); state.filterTipo = el.dataset.tipo; renderBebidas();
@@ -387,7 +484,7 @@ function setCat(el) {
 }
 
 function renderBebidas() {
-  const g = state.grupos.find(g => g.id === state.currentGrupoId);
+  const g = state.db.grupos.find(g => g.code === state.currentGrupoCode);
   if (!g) return;
   const q = document.getElementById('search-input').value.toLowerCase();
   const list = g.bebidas.filter(b => {
@@ -398,7 +495,7 @@ function renderBebidas() {
   });
   const container = document.getElementById('bebidas-container');
   if (!list.length) {
-    container.innerHTML = `<div class="empty-state"><svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1" style="color:var(--surface2)"><path d="M8 22h8M12 17v5M5 2h14l-2 9a5 5 0 01-10 0L5 2z"/></svg><span>Aun no hay bebidas en este grupo</span></div>`;
+    container.innerHTML = `<div class="empty-state"><svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1" style="color:var(--surface2)"><path d="M8 22h8M12 17v5M5 2h14l-2 9a5 5 0 01-10 0L5 2z"/></svg><span>Aún no hay bebidas en este grupo</span></div>`;
     return;
   }
   container.innerHTML = `<div class="bebidas-grid">${list.map(b => {
@@ -413,6 +510,7 @@ function catIcon(cat) {
   return m[cat] || '🥂';
 }
 
+// ── Modal añadir bebida ──
 function openModal() {
   state.rating = 0; state.photoData = null;
   ['m-nombre','m-marca','m-lugar','m-notas'].forEach(id => document.getElementById(id).value = '');
@@ -440,24 +538,46 @@ function previewPhoto(input) {
   reader.readAsDataURL(input.files[0]);
 }
 
-function addBebida() {
+async function addBebida() {
   const nombre = document.getElementById('m-nombre').value.trim();
   const cat = document.getElementById('m-cat').value;
-  if (!nombre || !cat) { alert('Nombre y categoria son obligatorios'); return; }
-  const g = state.grupos.find(g => g.id === state.currentGrupoId);
+  if (!nombre || !cat) { showToast('Nombre y categoría son obligatorios'); return; }
+
+  setLoading('btn-add-bebida', true);
   const fecha = document.getElementById('m-fecha').value;
   const parts = fecha.split('-');
   const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
   const fechaFmt = parts[2] + ' ' + meses[parseInt(parts[1])-1] + ' ' + parts[0].slice(2);
-  g.bebidas.push({ nombre, cat, tipo: document.getElementById('m-tipo').value, marca: document.getElementById('m-marca').value, lugar: document.getElementById('m-lugar').value, notas: document.getElementById('m-notas').value, rating: state.rating, fecha: fechaFmt, author: state.user, photo: state.photoData });
-  save();
-  closeModal();
-  renderBebidas();
+
+  try {
+    await dbRead();
+    const g = state.db.grupos.find(g => g.code === state.currentGrupoCode);
+    g.bebidas.push({ nombre, cat, tipo: document.getElementById('m-tipo').value, marca: document.getElementById('m-marca').value, lugar: document.getElementById('m-lugar').value, notas: document.getElementById('m-notas').value, rating: state.rating, fecha: fechaFmt, author: state.user, photo: state.photoData });
+    await dbWrite();
+    showToast('Bebida añadida');
+    closeModal();
+    renderBebidas();
+  } catch(e) {
+    showToast('Error al guardar, inténtalo de nuevo');
+  }
+  setLoading('btn-add-bebida', false);
 }
 
-// Iniciar cargando datos guardados
-load();
-if (state.user && state.grupos.length) showScreen('mis-grupos');
+// ── Inicio ──
+async function init() {
+  loadSession();
+  try {
+    await dbRead();
+    if (state.user && state.currentGrupoCode) {
+      const g = state.db.grupos.find(g => g.code === state.currentGrupoCode);
+      if (g) { showScreen('mis-grupos'); return; }
+    }
+    if (state.user) { showScreen('mis-grupos'); return; }
+  } catch(e) {}
+  showScreen('welcome');
+}
+
+init();
 </script>
 </body>
 </html>
